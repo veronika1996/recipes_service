@@ -1,7 +1,12 @@
 {
-  "name": "Jagode sa slagom",
-  "createdBy": "Admin",
+  "name": "Recipe2",
+  "ingredients": [
+    {"name": "Tomato",
+      "quantity": "500"
+    }
+  ],
+  "preparation": "Way of preparation",
   "category": "DINNER",
-  "preparation": "Why of preparation",
-  "numberOfPortions": 3
+  "numberOfPortions": 2,
+  "createdBy": "Admin"
 }

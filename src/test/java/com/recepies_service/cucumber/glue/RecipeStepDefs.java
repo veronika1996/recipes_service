@@ -3,7 +3,6 @@ package com.recepies_service.cucumber.glue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -14,6 +13,7 @@ import com.recepies_service.dto.IngredientDTO;
 import com.recepies_service.dto.RecipeDTO;
 import com.recepies_service.entity.IngredientClient;
 import com.recepies_service.entity.RecipeEntity;
+import com.recepies_service.entity.RecipeIngredientEntity;
 import com.recepies_service.enums.Category;
 import com.recepies_service.enums.RecipeCategory;
 import com.recepies_service.repository.RecipeRepository;
@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,9 +56,11 @@ public class RecipeStepDefs {
 
   @When("I send a POST request to {string}")
   public void iSendAPostRequestTo(String path) {
-
+    IngredientDTO ingredientDTO =  new IngredientDTO("Tomato", 25, "Admin", Category.FRUIT);
+    ingredientDTO.setId(20L);
+    when(ingredientClient.getIngredientByName("Tomato")).thenReturn(ingredientDTO);
+    when(ingredientClient.getIngredientsByIds(List.of(20L))).thenReturn(List.of(ingredientDTO));
     String url = "http://localhost:" + 8084 + "/meal_plan" + path;
-    // Mock response from ingredientClient
     try {
       response = restTemplate.postForEntity(url, recipeDTO, String.class);
     } catch (HttpClientErrorException | HttpServerErrorException e) {
@@ -70,8 +71,13 @@ public class RecipeStepDefs {
   @Given("the system is initialized")
   public void theSystemIsInitialized() {
     recipeRepository.deleteAll();
-    RecipeEntity recipe = new RecipeEntity("Recipe1", List.of(20L), "Way of preparation", 500, RecipeCategory.DINNER, 2, "Admin");
-    recipeRepository.save(recipe);
+    RecipeEntity entity = new RecipeEntity("Recipe1", null, "Way of preparation", 500, RecipeCategory.DINNER, 2, "Admin");
+    RecipeIngredientEntity rie = new RecipeIngredientEntity();
+    rie.setIngredientId(20L);
+    rie.setQuantity(50.0);
+    rie.setRecipe(entity);
+    entity.setIngredientsWithQuantity(List.of(rie));
+    recipeRepository.save(entity);  recipeRepository.save(entity);
 
     RecipeEntity savedRecipe = recipeRepository.findByName("Recipe1").orElse(null);
     assertNotNull("Recipe should be saved and found", savedRecipe);
@@ -160,6 +166,10 @@ public class RecipeStepDefs {
 
   @When("I send a PUT request to {string}")
   public void iSendAPUTRequestTo(String path) {
+    IngredientDTO ingredientDTO =  new IngredientDTO("Tomato", 25, "Admin", Category.FRUIT);
+    ingredientDTO.setId(20L);
+    when(ingredientClient.getIngredientByName("Tomato")).thenReturn(ingredientDTO);
+    when(ingredientClient.getIngredientsByIds(List.of(20L))).thenReturn(List.of(ingredientDTO));
     String url = "http://localhost:" + 8084 + "/meal_plan/" + path;
     try {
       response =
@@ -182,7 +192,13 @@ public class RecipeStepDefs {
   public void theRecipeListContainsRecipe(int size) {
     recipeRepository.deleteAll();
     for (int i = 0; i < size; i++) {
-      recipeRepository.save(new RecipeEntity("Name" + i, List.of(20L), "Way of preparation", 500, RecipeCategory.DINNER, 2, "Admin"));
+      RecipeEntity entity = new RecipeEntity("Name" + i, null, "Way of preparation", 500, RecipeCategory.DINNER, 2, "Admin");
+      RecipeIngredientEntity rie = new RecipeIngredientEntity();
+      rie.setIngredientId(20L);
+      rie.setQuantity(50.0);
+      rie.setRecipe(entity);
+      entity.setIngredientsWithQuantity(List.of(rie));
+      recipeRepository.save(entity);
     }
     List<RecipeEntity> savedRecipe1 = recipeRepository.findAll();
     assertEquals(savedRecipe1.size(), size);

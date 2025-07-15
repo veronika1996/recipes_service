@@ -1,9 +1,11 @@
 package com.recepies_service.service;
 
 import com.recepies_service.dto.IngredientDTO;
+import com.recepies_service.dto.IngredientQuantityDto;
 import com.recepies_service.dto.RecipeDTO;
 import com.recepies_service.entity.IngredientClient;
 import com.recepies_service.entity.RecipeEntity;
+import com.recepies_service.entity.RecipeIngredientEntity;
 import com.recepies_service.repository.RecipeRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -13,13 +15,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
-//
+
 @Service
 @Validated
 public class RecipeService {
 
     private static final String RECIPE_NOT_FOUND_ERROR = "Recipe not found for recipe name: ";
     private static final String RECIPE_NAME_ALREADY_EXIST = "Recipe name already exists: ";
+    private static final String INGREDIENT_NOT_VALID_ERROR = "Ingredient is not valid.";
 
 
     private final RecipeRepository recipeRepository;
@@ -45,29 +48,12 @@ public class RecipeService {
         return mapToDto(savedEntity);
     }
 
-    public RecipeEntity mapToEntity(RecipeDTO dto) {
-        List<Long> ingredientIds = dto.getIngredients().stream()
-            .map(IngredientDTO::getId)
-            .toList();
-
-        RecipeEntity entity = new RecipeEntity();
-        entity.setName(dto.getName());
-        entity.setIngredientIds(ingredientIds);
-        entity.setPreparation(dto.getPreparation());
-        entity.setCaloriesNumber(dto.getCaloriesNumber());
-        entity.setCategory(dto.getCategory());
-        entity.setNumberOfPortions(dto.getNumberOfPortions());
-        entity.setCreatedBy(dto.getCreatedBy());
-
-        return entity;
-    }
-
     @Transactional
     public RecipeDTO updateRecipe(String name, @Valid RecipeDTO recipeDTO) {
-        //checking if the entity exists in the database
-        RecipeEntity recipeEntity = findEntityByName(name);
+        RecipeEntity foundEntity = findEntityByName(name);
 
-        recipeEntity = mapToEntity(recipeDTO);
+        RecipeEntity recipeEntity = mapToEntity(recipeDTO);
+        recipeEntity.setId(foundEntity.getId());
         RecipeEntity updatedEntity = recipeRepository.save(recipeEntity);
         return mapToDto(updatedEntity);
     }
@@ -91,18 +77,69 @@ public class RecipeService {
                 .orElseThrow(() -> new UsernameNotFoundException(RECIPE_NOT_FOUND_ERROR + name));
     }
 
-
     public RecipeDTO mapToDto(RecipeEntity entity) {
-        List<IngredientDTO> ingredients = ingredientClient.getIngredientsByIds(entity.getIngredientIds());
+        List<Long> ingredientIds = entity.getIngredientsWithQuantity()
+            .stream()
+            .map(RecipeIngredientEntity::getIngredientId)
+            .toList();
+
+        List<IngredientDTO> ingredientDTOs = ingredientClient.getIngredientsByIds(ingredientIds);
+
+        List<IngredientQuantityDto> ingredientsWithQuantities = entity.getIngredientsWithQuantity().stream()
+            .map(ri -> {
+                IngredientDTO dto = ingredientDTOs.stream()
+                    .filter(i -> i.getId().equals(ri.getIngredientId()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException(INGREDIENT_NOT_VALID_ERROR));
+
+                return new IngredientQuantityDto(dto.getName(), ri.getQuantity());
+            })
+            .toList();
+
         return new RecipeDTO(
             entity.getName(),
-            ingredients,
+            ingredientsWithQuantities,
             entity.getPreparation(),
             entity.getCaloriesNumber(),
             entity.getCategory(),
             entity.getNumberOfPortions(),
             entity.getCreatedBy()
         );
+    }
+
+    public RecipeEntity mapToEntity(RecipeDTO dto) {
+        RecipeEntity entity = new RecipeEntity();
+
+        entity.setName(dto.getName());
+        entity.setPreparation(dto.getPreparation());
+        entity.setCaloriesNumber(calculateCaloriesPerPortion(dto.getIngredients(), dto.getNumberOfPortions()));
+        entity.setCategory(dto.getCategory());
+        entity.setNumberOfPortions(dto.getNumberOfPortions());
+        entity.setCreatedBy(dto.getCreatedBy());
+        List<RecipeIngredientEntity> ingredientsWithQuantity = dto.getIngredients().stream()
+            .map(iq -> {
+                RecipeIngredientEntity rie = new RecipeIngredientEntity();
+                IngredientDTO i = ingredientClient.getIngredientByName(iq.getName());
+                rie.setIngredientId(i.getId());
+                rie.setQuantity(iq.getQuantity());
+                rie.setRecipe(entity);
+                return rie;
+            })
+            .toList();
+
+        entity.setIngredientsWithQuantity(ingredientsWithQuantity);
+
+        return entity;
+    }
+
+    private Integer calculateCaloriesPerPortion(List<IngredientQuantityDto> ingredients,
+        Integer numberOfPortions) {
+        double result = 0.0;
+        for(IngredientQuantityDto quantityDto : ingredients) {
+            IngredientDTO ingredientDTO = ingredientClient.getIngredientByName(quantityDto.getName());
+            result += ingredientDTO.getCalorieNumber() * quantityDto.getQuantity() / 100;
+        }
+        return (int) (result/numberOfPortions);
     }
 
 }

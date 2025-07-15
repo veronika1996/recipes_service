@@ -1,12 +1,8 @@
 {
   "name": "Recipe1",
   "ingredients": [
-    {
-      "id": 330,
-      "name": "Tomato",
-      "calorieNumber":25,
-      "addedBy":"Admin",
-      "category":"FRUIT"
+    {"name": "Tomato",
+      "quantity": "500"
     }
   ],
   "preparation": "Way of preparation",

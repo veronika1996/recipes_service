@@ -25,4 +25,11 @@ public class IngredientClient {
     );
     return Arrays.asList(response);
   }
+
+  public IngredientDTO getIngredientByName(String name) {
+    IngredientDTO response = restTemplate.getForObject(
+        ingredientsServiceUrl + "/ingredients/" + name, IngredientDTO.class
+    );
+    return response;
+  }
 }

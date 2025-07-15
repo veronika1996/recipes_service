@@ -3,11 +3,8 @@
     "name": "Name0",
     "ingredients": [
       {
-        "id": 20,
         "name": "Tomato",
-        "calorieNumber": 25,
-        "addedBy": "Admin",
-        "category": "FRUIT"
+        "quantity": 50.0
       }
     ],
     "preparation": "Way of preparation",
@@ -20,11 +17,8 @@
     "name": "Name1",
     "ingredients": [
       {
-        "id": 20,
         "name": "Tomato",
-        "calorieNumber": 25,
-        "addedBy": "Admin",
-        "category": "FRUIT"
+        "quantity": 50.0
       }
     ],
     "preparation": "Way of preparation",

@@ -1,19 +1,17 @@
 package com.recepies_service.entity;
 
 import com.recepies_service.enums.RecipeCategory;
-import jakarta.persistence.CollectionTable;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "app_recipe")
@@ -25,10 +23,8 @@ public class RecipeEntity {
 
     private String name;
 
-    @ElementCollection
-    @CollectionTable(name = "recipe_ingredient_ids", joinColumns = @JoinColumn(name = "recipe_id"))
-    @Column(name = "ingredient_id")
-    private List<Long> ingredientIds;
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RecipeIngredientEntity> ingredientsWithQuantity;
 
     @Column(length = 2000)
     private String preparation;
@@ -42,22 +38,23 @@ public class RecipeEntity {
 
     private String createdBy;
 
-    public List<Long> getIngredientIds() {
-        return ingredientIds;
+    public List<RecipeIngredientEntity> getIngredientsWithQuantity() {
+        return ingredientsWithQuantity;
     }
 
-    public void setIngredientIds(List<Long> ingredientIds) {
-        this.ingredientIds = ingredientIds;
+    public void setIngredientsWithQuantity(List<RecipeIngredientEntity> ingredientsWithQuantity) {
+        this.ingredientsWithQuantity = ingredientsWithQuantity;
     }
 
     public RecipeEntity() {
     }
 
-    public RecipeEntity(String name, List<Long> ingredientIds, String preparation,
+    public RecipeEntity(String name, List<RecipeIngredientEntity> ingredientsWithQuantity,
+        String preparation,
         Integer caloriesNumber, RecipeCategory category,
         Integer numberOfPortions, String createdBy) {
         this.name = name;
-        this.ingredientIds = ingredientIds;
+        this.ingredientsWithQuantity = ingredientsWithQuantity;
         this.preparation = preparation;
         this.caloriesNumber = caloriesNumber;
         this.category = category;

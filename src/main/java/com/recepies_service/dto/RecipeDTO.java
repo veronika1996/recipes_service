@@ -14,13 +14,11 @@ public class RecipeDTO {
     @NotEmpty(message = "Name of recipe cannot be empty")
     private String name;
 
-    private List<IngredientDTO> ingredients;
+    private List<IngredientQuantityDto> ingredients;
 
     @NotEmpty(message = "Preparation instructions cannot be empty")
     private String preparation;
 
-    @NotNull(message = "Calories number cannot be null!")
-    @Positive(message = "Calories number needs to be a positive value")
     private Integer caloriesNumber;
 
     @NotNull(message = "Category cannot be null!")
@@ -36,7 +34,7 @@ public class RecipeDTO {
     public RecipeDTO() {
     }
 
-    public RecipeDTO(String name, List<IngredientDTO> ingredients, String preparation, Integer caloriesNumber, RecipeCategory category, Integer numberOfPortions, String createdBy) {
+    public RecipeDTO(String name, List<IngredientQuantityDto> ingredients, String preparation, Integer caloriesNumber, RecipeCategory category, Integer numberOfPortions, String createdBy) {
         this.name = name;
         this.ingredients = ingredients;
         this.preparation = preparation;
@@ -52,14 +50,6 @@ public class RecipeDTO {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public List<IngredientDTO> getIngredients() {
-        return ingredients;
-    }
-
-    public void setIngredients(List<IngredientDTO> ingredients) {
-        this.ingredients = ingredients;
     }
 
     public String getPreparation() {
@@ -100,5 +90,13 @@ public class RecipeDTO {
 
     public void setCreatedBy(String createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public List<IngredientQuantityDto> getIngredients() {
+        return ingredients;
+    }
+
+    public void setIngredients(List<IngredientQuantityDto> ingredients) {
+        this.ingredients = ingredients;
     }
 }
