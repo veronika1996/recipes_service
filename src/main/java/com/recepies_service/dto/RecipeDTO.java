@@ -9,7 +9,7 @@ import java.util.List;
 
 public class RecipeDTO {
 
-    Long id;
+    private Long id;
 
     @NotEmpty(message = "Name of recipe cannot be empty")
     private String name;
@@ -34,7 +34,8 @@ public class RecipeDTO {
     public RecipeDTO() {
     }
 
-    public RecipeDTO(String name, List<IngredientQuantityDto> ingredients, String preparation, Integer caloriesNumber, RecipeCategory category, Integer numberOfPortions, String createdBy) {
+    public RecipeDTO(Long id, String name, List<IngredientQuantityDto> ingredients, String preparation, Integer caloriesNumber, RecipeCategory category, Integer numberOfPortions, String createdBy) {
+        this.id = id;
         this.name = name;
         this.ingredients = ingredients;
         this.preparation = preparation;
@@ -90,6 +91,14 @@ public class RecipeDTO {
 
     public void setCreatedBy(String createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public List<IngredientQuantityDto> getIngredients() {

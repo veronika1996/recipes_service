@@ -53,12 +53,13 @@ public class RecipeStepDefs {
   private final RestTemplate restTemplate = new RestTemplate();
   private ResponseEntity<String> response;
   private RecipeDTO recipeDTO;
+  private Long recipeId;
 
   @When("I send a POST request to {string}")
   public void iSendAPostRequestTo(String path) {
     IngredientDTO ingredientDTO =  new IngredientDTO("Tomato", 25, "Admin", Category.FRUIT);
     ingredientDTO.setId(20L);
-    when(ingredientClient.getIngredientByName("Tomato")).thenReturn(ingredientDTO);
+    when(ingredientClient.getIngredientByNameAndUsername("Tomato", "Admin")).thenReturn(ingredientDTO);
     when(ingredientClient.getIngredientsByIds(List.of(20L))).thenReturn(List.of(ingredientDTO));
     String url = "http://localhost:" + 8084 + "/meal_plan" + path;
     try {
@@ -77,8 +78,9 @@ public class RecipeStepDefs {
     rie.setQuantity(50.0);
     rie.setRecipe(entity);
     entity.setIngredientsWithQuantity(List.of(rie));
-    recipeRepository.save(entity);  recipeRepository.save(entity);
+    RecipeEntity savedEntity = recipeRepository.save(entity);
 
+    recipeId = savedEntity.getId();
     RecipeEntity savedRecipe = recipeRepository.findByName("Recipe1").orElse(null);
     assertNotNull("Recipe should be saved and found", savedRecipe);
   }
@@ -168,7 +170,7 @@ public class RecipeStepDefs {
   public void iSendAPUTRequestTo(String path) {
     IngredientDTO ingredientDTO =  new IngredientDTO("Tomato", 25, "Admin", Category.FRUIT);
     ingredientDTO.setId(20L);
-    when(ingredientClient.getIngredientByName("Tomato")).thenReturn(ingredientDTO);
+    when(ingredientClient.getIngredientByNameAndUsername("Tomato", "Admin")).thenReturn(ingredientDTO);
     when(ingredientClient.getIngredientsByIds(List.of(20L))).thenReturn(List.of(ingredientDTO));
     String url = "http://localhost:" + 8084 + "/meal_plan/" + path;
     try {
@@ -192,7 +194,7 @@ public class RecipeStepDefs {
   public void theRecipeListContainsRecipe(int size) {
     recipeRepository.deleteAll();
     for (int i = 0; i < size; i++) {
-      RecipeEntity entity = new RecipeEntity("Name" + i, null, "Way of preparation", 500, RecipeCategory.DINNER, 2, "Admin");
+      RecipeEntity entity = new RecipeEntity("Name" + i, null, "Way of preparation", 500, RecipeCategory.DINNER, 2, "Admin1");
       RecipeIngredientEntity rie = new RecipeIngredientEntity();
       rie.setIngredientId(20L);
       rie.setQuantity(50.0);
@@ -201,6 +203,7 @@ public class RecipeStepDefs {
       recipeRepository.save(entity);
     }
     List<RecipeEntity> savedRecipe1 = recipeRepository.findAll();
+    System.out.println("Dosla si dovde savedRecipe size je : " + savedRecipe1.size());
     assertEquals(savedRecipe1.size(), size);
   }
 
@@ -220,12 +223,54 @@ public class RecipeStepDefs {
           new String(Files.readAllBytes(Paths.get("src/test/java/resources/" + filePath)));
 
       String actualJson = response.getBody();
+      System.out.println("Actual " + actualJson);
 
       JSONAssert.assertEquals(
           expectedJson, actualJson, false);
 
+      System.out.println("Expected " + expectedJson);
+
     } catch (Exception e) {
       throw new RuntimeException("Error during JSON comparison: " + e.getMessage(), e);
+    }
+  }
+
+  @When("I send a GET by username request to {string}")
+  public void iSendAGETByUsernameRequestTo(String path) {
+    String url = "http://localhost:" + 8084 + "/meal_plan" + path;
+    IngredientDTO ingredientDTO =  new IngredientDTO("Tomato", 25, "Admin", Category.FRUIT);
+    ingredientDTO.setId(20L);
+    when(ingredientClient.getIngredientsByIds(List.of(20L))).thenReturn(List.of(ingredientDTO));
+    try {
+      response = restTemplate.exchange(url, HttpMethod.GET, null, String.class);
+    } catch (HttpClientErrorException | HttpServerErrorException e) {
+      response = ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+    }
+  }
+
+  @When("I send a DELETE by id request")
+  public void iSendADELETEByIdRequest() {
+    String url = "http://localhost:" + 8084 + "/meal_plan/recipes?id=" + recipeId;
+
+    try {
+      response = restTemplate.exchange(url, HttpMethod.DELETE, null, String.class);
+    } catch (HttpClientErrorException | HttpServerErrorException e) {
+      response = ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+    }
+  }
+
+  @When("I send a PUT by id request")
+  public void iSendAPUTByIdRequest() {
+    IngredientDTO ingredientDTO =  new IngredientDTO("Tomato", 25, "Admin", Category.FRUIT);
+    ingredientDTO.setId(20L);
+    when(ingredientClient.getIngredientByNameAndUsername("Tomato", "Admin")).thenReturn(ingredientDTO);
+    when(ingredientClient.getIngredientsByIds(List.of(20L))).thenReturn(List.of(ingredientDTO));
+    String url = "http://localhost:" + 8084 + "/meal_plan/recipes?id=" + recipeId;;
+    try {
+      response =
+          restTemplate.exchange(url, HttpMethod.PUT, new HttpEntity<>(recipeDTO), String.class);
+    } catch (HttpClientErrorException | HttpServerErrorException e) {
+      response = ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
     }
   }
 

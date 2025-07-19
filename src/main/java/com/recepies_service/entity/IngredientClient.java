@@ -26,9 +26,9 @@ public class IngredientClient {
     return Arrays.asList(response);
   }
 
-  public IngredientDTO getIngredientByName(String name) {
+  public IngredientDTO getIngredientByNameAndUsername(String name, String username) {
     IngredientDTO response = restTemplate.getForObject(
-        ingredientsServiceUrl + "/ingredients/" + name, IngredientDTO.class
+        ingredientsServiceUrl + "/ingredients?name=" + name + "&username=" + username, IngredientDTO.class
     );
     return response;
   }

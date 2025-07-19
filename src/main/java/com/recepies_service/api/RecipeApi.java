@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 public interface RecipeApi {
 
@@ -45,6 +46,23 @@ public interface RecipeApi {
       @Parameter(description = "Updated recipe details") @RequestBody RecipeDTO recipeDTO);
 
   @Operation(
+      summary = "Update an existing recipe by id",
+      description = "This endpoint allows you to update an existing recipe by its id.",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "Recipe successfully updated",
+              content = @Content(mediaType = "application/json", schema = @Schema(implementation = RecipeDTO.class))
+          ),
+          @ApiResponse(responseCode = "404", description = "Recipe not found")
+      }
+  )
+  ResponseEntity<RecipeDTO> updateRecipeById(
+      @Parameter(description = "Name of the recipe to be updated") @RequestParam Long id,
+      @Parameter(description = "Updated recipe details") @RequestBody RecipeDTO recipeDTO);
+
+
+  @Operation(
       summary = "Delete a recipe",
       description = "This endpoint allows you to delete a recipe by its name.",
       responses = {
@@ -54,6 +72,18 @@ public interface RecipeApi {
   )
   ResponseEntity<Void> deleteRecipe(
       @Parameter(description = "Name of the recipe to be deleted") @PathVariable String name);
+
+  @Operation(
+      summary = "Delete a recipe by id",
+      description = "This endpoint allows you to delete a recipe by its id.",
+      responses = {
+          @ApiResponse(responseCode = "204", description = "Recipe successfully deleted"),
+          @ApiResponse(responseCode = "404", description = "Recipe not found")
+      }
+  )
+  ResponseEntity<Void> deleteRecipeById(
+      @Parameter(description = "Name of the recipe to be deleted") @RequestParam Long id);
+
 
   @Operation(
       summary = "Get all recipes",
@@ -82,4 +112,19 @@ public interface RecipeApi {
   )
   ResponseEntity<RecipeDTO> getRecipeByName(
       @Parameter(description = "Name of the recipe to be fetched") @PathVariable String name);
+
+  @Operation(
+      summary = "Get all recipes by username",
+      description = "This endpoint allows you to get recipes by their username.",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "Recipes retrieved successfully",
+              content = @Content(mediaType = "application/json", schema = @Schema(implementation = RecipeDTO.class))
+          ),
+      }
+  )
+  ResponseEntity<List<RecipeDTO>> getRecipesByUsername(@Parameter(description = "Username for which recipes should be fetched") @RequestParam String name);
+
+
 }

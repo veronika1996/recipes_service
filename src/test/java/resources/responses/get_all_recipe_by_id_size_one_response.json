@@ -12,19 +12,5 @@
     "category": "DINNER",
     "numberOfPortions": 2,
     "createdBy": "Admin1"
-  },
-  {
-    "name": "Name1",
-    "ingredients": [
-      {
-        "name": "Tomato",
-        "quantity": 50.0
-      }
-    ],
-    "preparation": "Way of preparation",
-    "caloriesNumber": 500,
-    "category": "DINNER",
-    "numberOfPortions": 2,
-    "createdBy": "Admin1"
   }
 ]

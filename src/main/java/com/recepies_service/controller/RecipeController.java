@@ -40,6 +40,20 @@ public class RecipeController implements RecipeApi {
     return ResponseEntity.noContent().build();
   }
 
+  @PutMapping
+  public ResponseEntity<RecipeDTO> updateRecipeById(@RequestParam Long id, @RequestBody RecipeDTO recipeDTO) {
+    RecipeDTO response = recipeService.updateRecipeById(id, recipeDTO);
+    return ResponseEntity
+        .status(HttpStatus.OK)
+        .body(response);
+  }
+
+  @DeleteMapping
+  public ResponseEntity<Void> deleteRecipeById(@RequestParam Long id) {
+    recipeService.deleteRecipeById(id);
+    return ResponseEntity.noContent().build();
+  }
+
   @GetMapping
   public List<RecipeDTO> getAllRecipes() {
     return recipeService.getAllRecipes();
@@ -48,6 +62,14 @@ public class RecipeController implements RecipeApi {
   @GetMapping("/{name}")
   public ResponseEntity<RecipeDTO> getRecipeByName(@PathVariable String name) {
     RecipeDTO response = recipeService.getRecipeByName(name);
+    return ResponseEntity
+        .status(HttpStatus.OK)
+        .body(response);
+  }
+
+  @GetMapping(params = "username")
+  public ResponseEntity<List<RecipeDTO>>  getRecipesByUsername(@RequestParam String username) {
+    List<RecipeDTO> response = recipeService.getRecipesByUsername(username);
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(response);
