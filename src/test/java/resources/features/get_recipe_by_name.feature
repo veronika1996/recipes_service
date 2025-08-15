@@ -13,4 +13,4 @@ Feature: Get an recipe by name
   Scenario: Get a non-existing recipe
     When I send a GET request to "/recipes/NonExistingRecipe"
     Then I should receive a 404 response
-    And the response should contain error message "Recipe not found for recipe name: NonExistingRecipe"
+    And the response should contain error message "Nije pronadjen recept sa imenom: NonExistingRecipe"

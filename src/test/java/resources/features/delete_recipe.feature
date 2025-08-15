@@ -19,10 +19,10 @@ Feature: Delete an recipe
   Scenario: Delete a non-existing recipe
     When I send a DELETE request to "/recipes/NonExistingRecipe"
     Then I should receive a 404 response
-    And the response should contain error message "Recipe not found for recipe name: NonExistingRecipe"
+    And the response should contain error message "Nije pronadjen recept sa imenom: NonExistingRecipe"
 
   @error
   Scenario: Delete a recipe by non existing id
     When I send a DELETE request to "/recipes?id=1"
     Then I should receive a 404 response
-    And the response should contain error message "Recipe not found for recipe id: 1"
+    And the response should contain error message "Nije pronadjen recept sa id-em: 1"

@@ -129,6 +129,12 @@
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>0.8.12</version>
+        <configuration>
+          <excludes>
+            <exclude>com/recepies_service/RecipesServiceApplication*</exclude>
+            <exclude>com/recepies_service/entity/IngredientClient*</exclude>
+          </excludes>
+        </configuration>
         <executions>
           <execution>
             <id>prepare-agent</id>
@@ -142,7 +148,7 @@
             <goals>
               <goal>report</goal>
             </goals>
-            <phase>verify</phase>
+            <phase>test</phase>
             <configuration>
               <outputDirectory>${project.build.directory}/jacoco-report</outputDirectory>
             </configuration>

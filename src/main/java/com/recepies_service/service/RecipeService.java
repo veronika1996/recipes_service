@@ -18,16 +18,15 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public class RecipeService {
 
-    private static final String RECIPE_NOT_FOUND_ERROR = "Recipe not found for recipe name: ";
-    private static final String RECIPE_NAME_ALREADY_EXIST = "Recipe name already exists: ";
-    private static final String INGREDIENT_NOT_VALID_ERROR = "Ingredient is not valid.";
-    private static final String RECIPE_NOT_FOUND_BY_ID_ERROR = "Recipe not found for recipe id: ";
+    private static final String RECIPE_NOT_FOUND_ERROR = "Nije pronadjen recept sa imenom: ";
+    private static final String RECIPE_NAME_ALREADY_EXIST = "Vec postoji recept sa imenom: ";
+    private static final String INGREDIENT_NOT_VALID_ERROR = "Sastojak nije validan.";
+    private static final String RECIPE_NOT_FOUND_BY_ID_ERROR = "Nije pronadjen recept sa id-em: ";
 
 
 
     private final RecipeRepository recipeRepository;
     private final IngredientClient ingredientClient;
-
 
     public RecipeService(RecipeRepository recipeRepository, IngredientClient ingredientClient) {
         this.recipeRepository = recipeRepository;
@@ -97,6 +96,17 @@ public class RecipeService {
     private RecipeEntity findEntityById(Long id) {
         return recipeRepository.findById(id)
             .orElseThrow(() -> new UsernameNotFoundException(RECIPE_NOT_FOUND_BY_ID_ERROR + id));
+    }
+
+    public Integer getRecipeCalories(Long id) {
+        return recipeRepository.findCaloriesNumberById(id);
+    }
+
+    public Integer getConsumedCalories(List<Long> ids) {
+        return recipeRepository.findAllById(ids)
+            .stream()
+            .map(RecipeEntity::getCaloriesNumber)
+            .reduce(0, Integer::sum);
     }
 
 

@@ -4,9 +4,9 @@ server:
   port: 8084
 spring:
   application:
-    name: Ingredients app
+    name: Recipes app
   datasource:
-    url: jdbc:postgresql://localhost:5433/ingredient_test
+    url: jdbc:postgresql://localhost:5433/recipe_test
     username: postgres
     password: password
     driver-class-name: org.postgresql.Driver

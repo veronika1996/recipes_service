@@ -126,5 +126,18 @@ public interface RecipeApi {
   )
   ResponseEntity<List<RecipeDTO>> getRecipesByUsername(@Parameter(description = "Username for which recipes should be fetched") @RequestParam String name);
 
+  @Operation(
+      summary = "Get number of calories for list of recipe ids",
+      description = "This endpoint returns number of calories for list of recipe ids\"",
+      responses = {
+          @ApiResponse(
+              responseCode = "200",
+              description = "Calories number retrieved successfully",
+              content = @Content(mediaType = "application/json", schema = @Schema(implementation = Integer.class))
+          ),
+          @ApiResponse(responseCode = "404", description = "Ingredient not found")
+      }
+  )
+  ResponseEntity<Integer> getConsumedCalories(@RequestBody List<Long> ids);
 
 }

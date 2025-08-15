@@ -74,4 +74,18 @@ public class RecipeController implements RecipeApi {
         .status(HttpStatus.OK)
         .body(response);
   }
+
+  @PostMapping("/calorie")
+  public ResponseEntity<Integer> getRecipeCalories(
+      @RequestBody Long id) {
+    Integer response = recipeService.getRecipeCalories(id);
+    System.out.println(response);
+    return ResponseEntity.ok(response);
+  }
+
+  @PostMapping("/calories")
+  public ResponseEntity<Integer> getConsumedCalories(@RequestBody List<Long> ids) {
+    Integer calories = recipeService.getConsumedCalories(ids);
+    return ResponseEntity.ok(calories);
+  }
 }

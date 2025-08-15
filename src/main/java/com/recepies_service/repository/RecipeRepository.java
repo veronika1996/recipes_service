@@ -5,6 +5,7 @@ import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
 
@@ -22,8 +23,7 @@ public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
     @Transactional
     void deleteById(Long id);
 
-    // Find all with pagination and sorting
-    @Override
-    List<RecipeEntity> findAll();
+    @Query("SELECT r.caloriesNumber FROM RecipeEntity r WHERE r.id = :id")
+    Integer findCaloriesNumberById(Long id);
 
 }

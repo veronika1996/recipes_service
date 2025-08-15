@@ -20,18 +20,6 @@ public class RecipeIngredientEntity {
   @Column(name = "quantity")
   private Double quantity;
 
-  public Long getId() {
-    return id;
-  }
-
-  public void setId(Long id) {
-    this.id = id;
-  }
-
-  public RecipeEntity getRecipe() {
-    return recipe;
-  }
-
   public void setRecipe(RecipeEntity recipe) {
     this.recipe = recipe;
   }

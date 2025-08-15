@@ -18,6 +18,7 @@ import com.recepies_service.enums.Category;
 import com.recepies_service.enums.RecipeCategory;
 import com.recepies_service.repository.RecipeRepository;
 import com.recepies_service.service.RecipeService;
+import io.cucumber.java.PendingException;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -26,13 +27,17 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import org.mockito.MockitoAnnotations;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.HttpClientErrorException;
@@ -42,26 +47,48 @@ import org.springframework.web.client.RestTemplate;
 @ActiveProfiles("test")
 public class RecipeStepDefs {
 
+  private static final String BASE_PATH = "http://localhost:" + 8084 + "/meal_plan";
+  private static final String INGREDIENT_NAME = "Tomato";
+  private static final Integer CALORIE_NUMBER = 25;
+  private static final String ADDED_BY = "Admin";
+  private static final Long INGREDIENT_ID = 20L;
+  private static final String RESOURCES_PATH = "src/test/java/resources/";
+  List<Long> byIdsRequest = new ArrayList<>();
+  private static final String RECIPE_NAME = "Recipe1";
+  private static final String RECIPE_NAME_2 = "Recipe2";
+  private static final String PREPARATION = "Way of preparation";
+  private static final Integer RECIPE_CALORIES = 500;
+  private static final Double QUANTITY = 50.0;
+  private static final Integer PORTIONS = 2;
+
   private final ObjectMapper objectMapper = new ObjectMapper();
 
-  @Autowired private RecipeRepository recipeRepository;
+  @Autowired
+  private RecipeRepository recipeRepository;
 
-  @Autowired private RecipeService recipeService;
+  @Autowired
+  private RecipeService recipeService;
 
-  @Autowired private IngredientClient ingredientClient;
+  @Autowired
+  private IngredientClient ingredientClient;
 
   private final RestTemplate restTemplate = new RestTemplate();
   private ResponseEntity<String> response;
+  private ResponseEntity<Integer> responseInteger;
   private RecipeDTO recipeDTO;
   private Long recipeId;
 
   @When("I send a POST request to {string}")
   public void iSendAPostRequestTo(String path) {
-    IngredientDTO ingredientDTO =  new IngredientDTO("Tomato", 25, "Admin", Category.FRUIT);
-    ingredientDTO.setId(20L);
-    when(ingredientClient.getIngredientByNameAndUsername("Tomato", "Admin")).thenReturn(ingredientDTO);
-    when(ingredientClient.getIngredientsByIds(List.of(20L))).thenReturn(List.of(ingredientDTO));
-    String url = "http://localhost:" + 8084 + "/meal_plan" + path;
+    recipeRepository.deleteAll();
+    IngredientDTO ingredientDTO = new IngredientDTO(INGREDIENT_NAME, CALORIE_NUMBER, ADDED_BY,
+        Category.FRUIT);
+    ingredientDTO.setId(INGREDIENT_ID);
+    when(ingredientClient.getIngredientByNameAndUsername(INGREDIENT_NAME, ADDED_BY)).thenReturn(
+        ingredientDTO);
+    when(ingredientClient.getIngredientsByIds(List.of(INGREDIENT_ID))).thenReturn(
+        List.of(ingredientDTO));
+    String url = BASE_PATH + path;
     try {
       response = restTemplate.postForEntity(url, recipeDTO, String.class);
     } catch (HttpClientErrorException | HttpServerErrorException e) {
@@ -72,16 +99,16 @@ public class RecipeStepDefs {
   @Given("the system is initialized")
   public void theSystemIsInitialized() {
     recipeRepository.deleteAll();
-    RecipeEntity entity = new RecipeEntity("Recipe1", null, "Way of preparation", 500, RecipeCategory.DINNER, 2, "Admin");
+    RecipeEntity entity = new RecipeEntity(RECIPE_NAME, null, PREPARATION, RECIPE_CALORIES, RecipeCategory.DINNER, PORTIONS, ADDED_BY);
     RecipeIngredientEntity rie = new RecipeIngredientEntity();
-    rie.setIngredientId(20L);
-    rie.setQuantity(50.0);
+    rie.setIngredientId(INGREDIENT_ID);
+    rie.setQuantity(QUANTITY);
     rie.setRecipe(entity);
     entity.setIngredientsWithQuantity(List.of(rie));
     RecipeEntity savedEntity = recipeRepository.save(entity);
 
     recipeId = savedEntity.getId();
-    RecipeEntity savedRecipe = recipeRepository.findByName("Recipe1").orElse(null);
+    RecipeEntity savedRecipe = recipeRepository.findByName(RECIPE_NAME).orElse(null);
     assertNotNull("Recipe should be saved and found", savedRecipe);
   }
 
@@ -91,12 +118,12 @@ public class RecipeStepDefs {
     // Load the JSON file from the resources folder
     recipeDTO =
         objectMapper.readValue(
-            new File("src/test/java/resources/" + fileName), RecipeDTO.class);
+            new File(RESOURCES_PATH + fileName), RecipeDTO.class);
   }
 
   @When("I send a DELETE request to {string}")
   public void iSendADELETERequestTo(String path) {
-    String url = "http://localhost:" + 8084 + "/meal_plan" + path;
+    String url = BASE_PATH + path;
 
     try {
       response = restTemplate.exchange(url, HttpMethod.DELETE, null, String.class);
@@ -116,7 +143,7 @@ public class RecipeStepDefs {
     ObjectMapper objectMapper = new ObjectMapper();
     RecipeDTO expectedRecipeDTO =
         objectMapper.readValue(
-            new File("src/test/java/resources/" + fileName), RecipeDTO.class);
+            new File(RESOURCES_PATH + fileName), RecipeDTO.class);
     RecipeDTO actualRecipeDTO =
         objectMapper.readValue(response.getBody(), RecipeDTO.class);
 
@@ -137,10 +164,9 @@ public class RecipeStepDefs {
   @And("the recipe {string} should be deleted from the system")
   public void theRecipeShouldBeDeletedFromTheSystem(String recipeName) {
     try {
-      String getUrl = "http://localhost:" + 8084 + "/meal_plan/recipes/";
       // Try to get the recipe after deletion
       ResponseEntity<String> getResponse =
-          restTemplate.exchange(getUrl + recipeName, HttpMethod.GET, null, String.class);
+          restTemplate.exchange(BASE_PATH + recipeName, HttpMethod.GET, null, String.class);
       // Expect 404 response when recipe is not found
       assertEquals(HttpStatus.NOT_FOUND, getResponse.getStatusCode());
     } catch (Exception e) {
@@ -150,10 +176,11 @@ public class RecipeStepDefs {
 
   @When("I send a GET request to {string}")
   public void iSendAGETRequestTo(String path) {
-    String url = "http://localhost:" + 8084 + "/meal_plan" + path;
-    IngredientDTO ingredientDTO =  new IngredientDTO("Tomato", 25, "Admin", Category.FRUIT);
-    ingredientDTO.setId(20L);
-    when(ingredientClient.getIngredientsByIds(List.of(20L))).thenReturn(List.of(ingredientDTO));
+    String url = BASE_PATH + path;
+    IngredientDTO ingredientDTO = new IngredientDTO(INGREDIENT_NAME, CALORIE_NUMBER, ADDED_BY,
+        Category.FRUIT);
+    ingredientDTO.setId(INGREDIENT_ID);
+    when(ingredientClient.getIngredientsByIds(List.of(INGREDIENT_ID))).thenReturn(List.of(ingredientDTO));
     try {
       response = restTemplate.exchange(url, HttpMethod.GET, null, String.class);
     } catch (HttpClientErrorException | HttpServerErrorException e) {
@@ -168,11 +195,13 @@ public class RecipeStepDefs {
 
   @When("I send a PUT request to {string}")
   public void iSendAPUTRequestTo(String path) {
-    IngredientDTO ingredientDTO =  new IngredientDTO("Tomato", 25, "Admin", Category.FRUIT);
-    ingredientDTO.setId(20L);
-    when(ingredientClient.getIngredientByNameAndUsername("Tomato", "Admin")).thenReturn(ingredientDTO);
-    when(ingredientClient.getIngredientsByIds(List.of(20L))).thenReturn(List.of(ingredientDTO));
-    String url = "http://localhost:" + 8084 + "/meal_plan/" + path;
+    IngredientDTO ingredientDTO = new IngredientDTO(INGREDIENT_NAME, CALORIE_NUMBER, ADDED_BY,
+        Category.FRUIT);
+    ingredientDTO.setId(INGREDIENT_ID);
+    when(ingredientClient.getIngredientByNameAndUsername(INGREDIENT_NAME, ADDED_BY)).thenReturn(
+        ingredientDTO);
+    when(ingredientClient.getIngredientsByIds(List.of(INGREDIENT_ID))).thenReturn(List.of(ingredientDTO));
+    String url = BASE_PATH + path;
     try {
       response =
           restTemplate.exchange(url, HttpMethod.PUT, new HttpEntity<>(recipeDTO), String.class);
@@ -185,7 +214,8 @@ public class RecipeStepDefs {
   public void theResponseShouldContainAnEmptyList() throws JsonProcessingException {
     ObjectMapper objectMapper = new ObjectMapper();
     List<RecipeDTO> recipes =
-        objectMapper.readValue(response.getBody(), new TypeReference<List<RecipeDTO>>() {});
+        objectMapper.readValue(response.getBody(), new TypeReference<List<RecipeDTO>>() {
+        });
 
     assertTrue(recipes == null || recipes.isEmpty());
   }
@@ -194,24 +224,32 @@ public class RecipeStepDefs {
   public void theRecipeListContainsRecipe(int size) {
     recipeRepository.deleteAll();
     for (int i = 0; i < size; i++) {
-      RecipeEntity entity = new RecipeEntity("Name" + i, null, "Way of preparation", 500, RecipeCategory.DINNER, 2, "Admin1");
+      RecipeEntity entity = new RecipeEntity("Name" + i, null, PREPARATION, RECIPE_CALORIES,
+          RecipeCategory.DINNER, PORTIONS, "Admin1");
       RecipeIngredientEntity rie = new RecipeIngredientEntity();
-      rie.setIngredientId(20L);
-      rie.setQuantity(50.0);
+      rie.setIngredientId(INGREDIENT_ID);
+      rie.setQuantity(QUANTITY);
       rie.setRecipe(entity);
       entity.setIngredientsWithQuantity(List.of(rie));
       recipeRepository.save(entity);
     }
     List<RecipeEntity> savedRecipe1 = recipeRepository.findAll();
-    System.out.println("Dosla si dovde savedRecipe size je : " + savedRecipe1.size());
     assertEquals(savedRecipe1.size(), size);
+
+    if (size == 1) {
+      byIdsRequest = Collections.singletonList(savedRecipe1.get(0).getId());
+    } else if (size == PORTIONS) {
+      byIdsRequest = Arrays.asList(savedRecipe1.get(0).getId(),
+          savedRecipe1.get(1).getId());
+    }
   }
 
   @And("the response should contain {int} recipe")
   public void theResponseShouldContainNumberRecipe(int size) throws JsonProcessingException {
     ObjectMapper objectMapper = new ObjectMapper();
     List<RecipeDTO> recipes =
-        objectMapper.readValue(response.getBody(), new TypeReference<List<RecipeDTO>>() {});
+        objectMapper.readValue(response.getBody(), new TypeReference<List<RecipeDTO>>() {
+        });
 
     assertEquals(recipes.size(), size);
   }
@@ -220,7 +258,7 @@ public class RecipeStepDefs {
   public void theResponseShouldBeListOfDataAsInJSONFile(String filePath) {
     try {
       String expectedJson =
-          new String(Files.readAllBytes(Paths.get("src/test/java/resources/" + filePath)));
+          new String(Files.readAllBytes(Paths.get(RESOURCES_PATH + filePath)));
 
       String actualJson = response.getBody();
       System.out.println("Actual " + actualJson);
@@ -237,10 +275,11 @@ public class RecipeStepDefs {
 
   @When("I send a GET by username request to {string}")
   public void iSendAGETByUsernameRequestTo(String path) {
-    String url = "http://localhost:" + 8084 + "/meal_plan" + path;
-    IngredientDTO ingredientDTO =  new IngredientDTO("Tomato", 25, "Admin", Category.FRUIT);
-    ingredientDTO.setId(20L);
-    when(ingredientClient.getIngredientsByIds(List.of(20L))).thenReturn(List.of(ingredientDTO));
+    String url = BASE_PATH + path;
+    IngredientDTO ingredientDTO = new IngredientDTO(INGREDIENT_NAME, CALORIE_NUMBER, ADDED_BY,
+        Category.FRUIT);
+    ingredientDTO.setId(INGREDIENT_ID);
+    when(ingredientClient.getIngredientsByIds(List.of(INGREDIENT_ID))).thenReturn(List.of(ingredientDTO));
     try {
       response = restTemplate.exchange(url, HttpMethod.GET, null, String.class);
     } catch (HttpClientErrorException | HttpServerErrorException e) {
@@ -250,7 +289,7 @@ public class RecipeStepDefs {
 
   @When("I send a DELETE by id request")
   public void iSendADELETEByIdRequest() {
-    String url = "http://localhost:" + 8084 + "/meal_plan/recipes?id=" + recipeId;
+    String url =  BASE_PATH + "/recipes?id=" + recipeId;
 
     try {
       response = restTemplate.exchange(url, HttpMethod.DELETE, null, String.class);
@@ -261,11 +300,13 @@ public class RecipeStepDefs {
 
   @When("I send a PUT by id request")
   public void iSendAPUTByIdRequest() {
-    IngredientDTO ingredientDTO =  new IngredientDTO("Tomato", 25, "Admin", Category.FRUIT);
-    ingredientDTO.setId(20L);
-    when(ingredientClient.getIngredientByNameAndUsername("Tomato", "Admin")).thenReturn(ingredientDTO);
-    when(ingredientClient.getIngredientsByIds(List.of(20L))).thenReturn(List.of(ingredientDTO));
-    String url = "http://localhost:" + 8084 + "/meal_plan/recipes?id=" + recipeId;;
+    IngredientDTO ingredientDTO = new IngredientDTO(INGREDIENT_NAME, CALORIE_NUMBER, ADDED_BY,
+        Category.FRUIT);
+    ingredientDTO.setId(INGREDIENT_ID);
+    when(ingredientClient.getIngredientByNameAndUsername(INGREDIENT_NAME, ADDED_BY)).thenReturn(
+        ingredientDTO);
+    when(ingredientClient.getIngredientsByIds(List.of(INGREDIENT_ID))).thenReturn(List.of(ingredientDTO));
+    String url = BASE_PATH + "/recipes?id=" + recipeId;
     try {
       response =
           restTemplate.exchange(url, HttpMethod.PUT, new HttpEntity<>(recipeDTO), String.class);
@@ -274,7 +315,87 @@ public class RecipeStepDefs {
     }
   }
 
-  public RecipeStepDefs() {
-    MockitoAnnotations.openMocks(this);
+  @Given("the recipe is created for an id\"")
+  public void theRecipeIsCreatedForAnId()
+      throws Throwable {    
+    recipeRepository.deleteAll();
+    RecipeEntity entity = new RecipeEntity(RECIPE_NAME, null, PREPARATION, RECIPE_CALORIES,
+        RecipeCategory.DINNER, PORTIONS, ADDED_BY);
+    RecipeIngredientEntity rie = new RecipeIngredientEntity();
+    rie.setIngredientId(INGREDIENT_ID);
+    rie.setQuantity(QUANTITY);
+    rie.setRecipe(entity);
+    entity.setIngredientsWithQuantity(List.of(rie));
+    RecipeEntity savedEntity = recipeRepository.save(entity);
+
+    recipeId = savedEntity.getId();
+  }
+
+
+  @When("I send a POST request to {string} by that id")
+  public void iSendAGETRequestToByThatId(String path) {
+    IngredientDTO ingredientDTO = new IngredientDTO(INGREDIENT_NAME, CALORIE_NUMBER, ADDED_BY,
+        Category.FRUIT);
+    ingredientDTO.setId(INGREDIENT_ID);
+    when(ingredientClient.getIngredientByNameAndUsername(INGREDIENT_NAME, ADDED_BY)).thenReturn(
+        ingredientDTO);
+    when(ingredientClient.getIngredientsByIds(List.of(INGREDIENT_ID))).thenReturn(
+        List.of(ingredientDTO));
+    String url = BASE_PATH + path;
+    responseInteger = restTemplate.postForEntity(url, recipeId, Integer.class);
+  }
+
+  @And("the response should be {int}")
+  public void theResponseShouldBe(int result) {
+    assertEquals(result, responseInteger.getBody().intValue());
+  }
+
+  @Then("I should receive as integer and code is {int}")
+  public void iShouldReceiveAsIntegerAndCodeIs(int statusCode) {
+    assertEquals(HttpStatus.valueOf(statusCode), responseInteger.getStatusCode());
+  }
+
+  @When("I send a POST request by ids")
+  public void iSendAPOSTRequestByIds() {
+    String url = BASE_PATH + "/recipes/calories";
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+
+    HttpEntity<List<Long>> requestEntity =
+        new HttpEntity<>(byIdsRequest, headers);
+
+    responseInteger = restTemplate.postForEntity(
+        url,
+        requestEntity,
+        Integer.class
+    );
+  }
+
+  @When("I add an recipe and send a POST request to {string}")
+  public void iAddAnRecipeAndSendAPOSTRequestTo(String path) {
+    recipeRepository.deleteAll();
+    RecipeEntity entity = new RecipeEntity(RECIPE_NAME_2, null, PREPARATION, RECIPE_CALORIES,
+        RecipeCategory.DINNER, PORTIONS, ADDED_BY);
+    RecipeIngredientEntity rie = new RecipeIngredientEntity();
+    rie.setIngredientId(INGREDIENT_ID);
+    rie.setQuantity(QUANTITY);
+    rie.setRecipe(entity);
+    entity.setIngredientsWithQuantity(List.of(rie));
+    RecipeEntity savedEntity = recipeRepository.save(entity);
+    assertEquals(savedEntity.getName(), RECIPE_NAME_2);
+    IngredientDTO ingredientDTO = new IngredientDTO(INGREDIENT_NAME, CALORIE_NUMBER, ADDED_BY,
+        Category.FRUIT);
+    ingredientDTO.setId(INGREDIENT_ID);
+    when(ingredientClient.getIngredientByNameAndUsername(INGREDIENT_NAME, ADDED_BY)).thenReturn(
+        ingredientDTO);
+    when(ingredientClient.getIngredientsByIds(List.of(INGREDIENT_ID))).thenReturn(
+        List.of(ingredientDTO));
+    String url = BASE_PATH + path;
+    try {
+      response = restTemplate.postForEntity(url, recipeDTO, String.class);
+    } catch (HttpClientErrorException | HttpServerErrorException e) {
+      response = ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+    }
   }
 }

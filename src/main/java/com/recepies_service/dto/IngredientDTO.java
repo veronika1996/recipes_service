@@ -9,19 +9,16 @@ public class IngredientDTO {
 
     Long id;
 
-    @NotEmpty(message = "Name of ingredient cannot be empty")
+    @NotEmpty(message = "Ime sastojka ne moze biti prazno")
     private String name;
 
-    @NotNull(message = "Calorie number cannot be null!")
-    @Positive(message = "Calorie number needs to be positive value")
+    @NotNull(message = "Broj kalorija ne moze biti null!")
+    @Positive(message = "Broj kalorija mora biti pozitivan")
     private int calorieNumber;
 
     private String addedBy;
 
     private Category category;
-
-    public IngredientDTO() {
-    }
 
     public IngredientDTO(String name, int calorieNumber, String addedBy, Category category) {
         this.name = name;
@@ -34,32 +31,8 @@ public class IngredientDTO {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public int getCalorieNumber() {
         return calorieNumber;
-    }
-
-    public void setCalorieNumber(int calorieNumber) {
-        this.calorieNumber = calorieNumber;
-    }
-
-    public String getAddedBy() {
-        return addedBy;
-    }
-
-    public void setAddedBy(String addedBy) {
-        this.addedBy = addedBy;
-    }
-
-    public Category getCategory() {
-        return category;
-    }
-
-    public void setCategory(Category category) {
-        this.category = category;
     }
 
     public Long getId() {

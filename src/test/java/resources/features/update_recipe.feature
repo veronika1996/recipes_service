@@ -15,7 +15,7 @@ Feature: Update an existing recipe
     Given the recipe data in JSON file "/requests/update_recipe_request.json"
     When I send a PUT request to "/recipes/NonExistingRecipe"
     Then I should receive a 404 response
-    And the response should contain error message "Recipe not found for recipe name: NonExistingRecipe"
+    And the response should contain error message "Nije pronadjen recept sa imenom: NonExistingRecipe"
 
   Scenario: Update recipe with missing calorie number
     Given the recipe data in JSON file "/requests/update_recipe_request_missing_calories.json"
@@ -35,4 +35,4 @@ Feature: Update an existing recipe
     Given the recipe data in JSON file "/requests/update_recipe_request.json"
     When I send a PUT request to "/recipes?id=1"
     Then I should receive a 404 response
-    And the response should contain error message "Recipe not found for recipe id: 1"
+    And the response should contain error message "Nije pronadjen recept sa id-em: 1"

@@ -1,8 +1,5 @@
 Feature: Create a new recipe
 
-  Background:
-    Given the system is initialized
-
   @create
   Scenario: Successfully create a new recipe
     Given the recipe data in JSON file "/requests/create_recipe_request.json"
@@ -28,3 +25,10 @@ Feature: Create a new recipe
     When I send a POST request to "/recipes"
     Then I should receive a 201 response
     And the recipe response should be like the recipe data in JSON file "/responses/create_recipe_response.json"
+
+  @error
+  Scenario: Create recipe name already exists
+    Given the recipe data in JSON file "/requests/create_recipe_request.json"
+    When I add an recipe and send a POST request to "/recipes"
+    Then I should receive a 400 response
+    And the response should contain error message "Vec postoji recept sa imenom: Recipe2"
