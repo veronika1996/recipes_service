@@ -132,7 +132,6 @@
         <configuration>
           <excludes>
             <exclude>com/recepies_service/RecipesServiceApplication*</exclude>
-            <exclude>com/recepies_service/entity/IngredientClient*</exclude>
           </excludes>
         </configuration>
         <executions>
